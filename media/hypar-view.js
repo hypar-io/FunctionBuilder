@@ -16,6 +16,9 @@ function init(uri) {
 			case 'load-model':
 				loadModel();
 				break;
+			case 'update-data-display':
+				updateDataDisplay(message.data);
+				break;
 		}
 	});
 
@@ -56,13 +59,6 @@ function init(uri) {
 	axesHelper.rotateOnAxis(new THREE.Vector3(1,0,0), -Math.PI/2);
 	scene.add(axesHelper);
 
-	// var size = 100;
-	// var divisions = 100;
-	// var colorCenterLine = new THREE.Color(0x4f4f4f);
-	// var colorGrid = new THREE.Color(0x4f4f4f);
-	// var gridHelper = new THREE.GridHelper(size, divisions, colorCenterLine, colorGrid);
-	// scene.add(gridHelper);
-
 	window.addEventListener('resize', onWindowResize, false);
 
 	camera.position.z = 5;
@@ -70,6 +66,22 @@ function init(uri) {
 	animate();
 
 	loadModel()
+}
+
+function updateDataDisplay(data) {
+	let outputEl = document.getElementById("outputs");
+	outputEl.innerHTML = '';
+	for(var prop in data) {
+		let title = document.createElement("p");
+		title.textContent = prop;
+		let value = document.createElement("h1");
+		if(typeof data[prop] == "number") {
+			value.textContent = data[prop].toFixed(3);
+		}
+		
+		outputEl.appendChild(title)
+		outputEl.appendChild(value)
+	}
 }
 
 var animate = function () {

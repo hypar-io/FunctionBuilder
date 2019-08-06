@@ -120,6 +120,16 @@ class HyparPanel {
 			modelPath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, "model.glb");
 		}
 
+		let outputPath = path.join(extensionPath, 'media', 'output.json');
+		if(vscode.workspace.workspaceFolders) {
+			outputPath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, "output.json");
+		}
+		
+		// This is only to test in debug mode whether the outputs show up.
+		if(!vscode.workspace.workspaceFolders) {
+			HyparPanel.currentPanel._panel.webview.postMessage({command: 'update-data-display', data: {"Volume": 5}});
+		}
+
 		console.debug(`Watching ${modelPath}.`);
 		const watcher = chokidar.watch(modelPath, {
 			ignored: /(^|[\/\\])\../,
@@ -132,6 +142,22 @@ class HyparPanel {
 				}
 				console.debug(`${path} was changed. Reloading...`);
 				HyparPanel.currentPanel._panel.webview.postMessage({command: 'load-model'});
+				
+				if(!vscode.workspace.workspaceFolders) {
+					HyparPanel.currentPanel._panel.webview.postMessage({command: 'update-data-display', data: {"Volume": 5.012345678}});
+				}
+				else {
+					fs.readFile(outputPath, 'utf8', (err:NodeJS.ErrnoException | null, data:string)=>{
+						if(err) {
+							console.warn(err);
+							return;
+						}
+						var outputData = JSON.parse(data);
+						if(HyparPanel.currentPanel) {
+							HyparPanel.currentPanel._panel.webview.postMessage({command: 'update-data-display', data: outputData});
+						}
+					});	
+				}
 			}
 		});
 	}
@@ -156,10 +182,7 @@ class HyparPanel {
 		// Update the content based on view changes
 		this._panel.onDidChangeViewState(
 			(e:vscode.WebviewPanelOnDidChangeViewStateEvent) => {
-				console.debug("Updating on changed state.");
-				// if(HyparPanel.currentPanel) {
-				// 	HyparPanel.currentPanel._panel.webview.postMessage({command: 'reload-model'});
-				// }
+				console.debug("Hypar view extension changed state. Nothing to do.");
 			},
 			null,
 			this._disposables
@@ -302,8 +325,12 @@ class HyparPanel {
 					init("${modelUri}");
 					loadModel();
 				</script>
-				<div id="inputs">
-					${inputDivs}
+				<div class="data">
+					<div id="inputs">
+						${inputDivs}
+					</div>
+					<div id="outputs">
+					</div>
 				</div>
             </body>
             </html>`;
