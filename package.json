@@ -31,10 +31,10 @@
 		]
 	},
 	"galleryBanner": {
-		"color": "#f15c6c"
+		"color": "f15c6c"
 	},
 	"repository": {
-		"url": "https://github.com/hypar-io/function-developer"
+		"url": "https://github.com/hypar-io/FunctionDeveloper"
 	},
 	"icon": "hypar-logo.png",
 	"scripts": {
