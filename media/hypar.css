@@ -1,0 +1,50 @@
+:root {
+	/* Hypar brand colors */
+	--hy-co-dark-blue: #1a4b5d;
+	--hy-co-dark-blue-half: #27718b;
+	--hy-co-gray: #a3c3cb;
+	--hy-co-pale-green: #eff0f3;
+	--hy-co-pink: #f15c6c;
+	--hy-co-medium-blue: #1e85b4;
+	--hy-co-light-blue: #0dafd3;
+	--hy-co-pale-blue: #ebf6f9; /* Hypar dark blue lightened */
+	--hy-co-warning: #f2cc5a;
+	--hy-co-warning-dark: #8b7227;
+  
+	--hy-card-width: 256px;
+	--hy-nav-bar-height: 40px;
+	--hy-co-error: #f9d4d0;
+	--hy-co-error-dark: #ff8275;
+	--hy-side-bar-width: 500px;
+	--hy-co-shadow: #cfdadd;
+  
+	--hy-thumb-size: 24px;
+	--hy-shadow: 0px 0px 6px var(--hy-co-shadow);
+	--hy-alert-height: 30px;
+  }
+
+body {
+	position: relative;
+	margin: 0; 
+	padding: 0;
+	height: 100vh;
+}
+
+canvas {
+	background: #1a4b5d
+}
+
+#model {
+	height: 100%;
+	overflow: hidden;
+}
+
+#inputs {
+	position: absolute;
+	display: flex;
+	flex-direction: column;
+	left: 0px;
+	top: 0px;
+	padding: 10px;
+	background: rgba(255, 255, 255, 0.2);
+}

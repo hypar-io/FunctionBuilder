@@ -1,0 +1,6 @@
+out
+node_modules
+*.vsix
+model.glb
+hypar.json
+.DS_Store

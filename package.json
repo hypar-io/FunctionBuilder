@@ -1,0 +1,57 @@
+{
+	"name": "hypar-function-developer",
+	"displayName": "Hypar Function Developer",
+	"version": "0.1.0",
+	"description": "A live building and visualization environment for building Hypar functions.",
+	"engines": {
+		"vscode": "^1.32.0"
+	},
+	"publisher": "hypar-io",
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onCommand:hypar.preview",
+		"onWebviewPanel:hypar",
+		"onCommand:workbench.action.tasks.runTask"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "hypar.preview",
+				"title": "Preview",
+				"category": "Hypar"
+			}
+		],
+		"taskDefinitions": [
+			{
+				"type": "Hypar"
+			}
+		]
+	},
+	"galleryBanner": {
+		"color": "#f15c6c"
+	},
+	"repository": {
+		"url": "https://github.com/hypar-io/function-developer"
+	},
+	"icon": "hypar-logo.png",
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"lint": "tslint -p ./",
+		"watch": "tsc -w -p ./"
+	},
+	"author": "ian@hypar.io",
+	"license": "ISC",
+	"devDependencies": {
+		"@types/node": "^10.5.2",
+		"tslint": "^5.16.0",
+		"typescript": "^3.5.1",
+		"@types/vscode": "^1.32.0"
+	},
+	"dependencies": {
+		"chokidar": "^3.0.2"
+	}
+}
