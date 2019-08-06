@@ -127,7 +127,17 @@ class HyparPanel {
 		
 		// This is only to test in debug mode whether the outputs show up.
 		if(!vscode.workspace.workspaceFolders) {
-			HyparPanel.currentPanel._panel.webview.postMessage({command: 'update-data-display', data: {"Volume": 5}});
+			HyparPanel.currentPanel._panel.webview.postMessage({
+				command: 'update-data-display', 
+				data: {
+					"Volume": 5, 
+					"Another Long-ish String": "This is something that should be caught by ellipsis.",
+					"Foo": 27.0,
+					"Bar": 42.0,
+					"Baz": 55.0,
+					"Barf": 22.0
+				}
+			});
 		}
 
 		console.debug(`Watching ${modelPath}.`);
@@ -143,10 +153,7 @@ class HyparPanel {
 				console.debug(`${path} was changed. Reloading...`);
 				HyparPanel.currentPanel._panel.webview.postMessage({command: 'load-model'});
 				
-				if(!vscode.workspace.workspaceFolders) {
-					HyparPanel.currentPanel._panel.webview.postMessage({command: 'update-data-display', data: {"Volume": 5.012345678}});
-				}
-				else {
+				if(vscode.workspace.workspaceFolders) {
 					fs.readFile(outputPath, 'utf8', (err:NodeJS.ErrnoException | null, data:string)=>{
 						if(err) {
 							console.warn(err);
@@ -209,6 +216,20 @@ class HyparPanel {
 							});
 						}
 						return;
+					case 'image-captured':
+						let matches = message.data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+						if (matches.length !== 3) {
+							return new Error('Invalid input string');
+						}
+						let imgData = Buffer.from(matches[2], 'base64');
+						if(vscode.workspace.workspaceFolders) {
+							let imgPath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, "preview.png");
+							fs.writeFile(imgPath, imgData, (err: NodeJS.ErrnoException | null)=>{
+								if(err) {
+									console.error(err);
+								}
+							});
+						}
 				}
 			},
 			null,
@@ -300,7 +321,7 @@ class HyparPanel {
 		}
 
 		return `<!DOCTYPE html>
-            <html lang="en">
+		<html lang="en">
             <head>
                 <meta charset="UTF-8">
                 <!--
@@ -329,11 +350,13 @@ class HyparPanel {
 					<div id="inputs">
 						${inputDivs}
 					</div>
+					<br>
 					<div id="outputs">
 					</div>
 				</div>
+				<button id="capture">Capture Preview</button>
             </body>
-            </html>`;
+		</html>`;
 	}
 }
 

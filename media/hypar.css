@@ -45,9 +45,15 @@ canvas {
 	flex-direction: column;
 	left: 0px;
 	top: 0px;
-	padding: 10px;
-	background: rgba(255, 255, 255, 0.2);
+	padding-left: 10px;
+	padding-right: 10px;
+	background: rgba(255, 255, 255, 0.4);
+	width: 150px;
+	height: 100%;
+	overflow-y: scroll;
+	overflow-x: hidden
 }
+
 
 #inputs {
 	position: relative;
@@ -68,7 +74,9 @@ h1 {
     margin-block-end: 0.2em;
     margin-inline-start: 0px;
     margin-inline-end: 0px;
-    font-weight: bold;
+	font-weight: bold;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 p {
@@ -76,5 +84,13 @@ p {
     margin-block-start: 0.5em;
     margin-block-end: 0.5em;
     margin-inline-start: 0px;
-    margin-inline-end: 0px;
+	margin-inline-end: 0px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+#capture {
+	position: absolute;
+	right: 10px;
+	bottom: 10px;
 }

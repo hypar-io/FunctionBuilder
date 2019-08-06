@@ -37,11 +37,21 @@ function init(uri) {
 		});
 	}
 
+	let captureButton = document.getElementById("capture")
+	captureButton.addEventListener("click", ()=>{
+		let strMime = "image/png";
+		let imgData = renderer.domElement.toDataURL(strMime);
+		vscode.postMessage({
+			command: 'image-captured',
+			data: imgData
+		})
+	})
+
 	scene = new THREE.Scene();
 	var div = document.getElementById("model")
 	camera = new THREE.PerspectiveCamera(75, div.clientWidth / div.clientHeight, 0.1, 1000);
 
-	renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+	renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: true });
 	renderer.setSize(div.clientWidth, div.clientHeight);
 	renderer.setClearColor(0x000000, 0);
 	div.appendChild(renderer.domElement);
@@ -77,6 +87,8 @@ function updateDataDisplay(data) {
 		let value = document.createElement("h1");
 		if(typeof data[prop] == "number") {
 			value.textContent = data[prop].toFixed(3);
+		} else {
+			value.textContent = data[prop]
 		}
 		
 		outputEl.appendChild(title)
