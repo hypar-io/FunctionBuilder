@@ -28,7 +28,7 @@ function init(uri) {
 	for(let i=0; i<inputs.length; i++)
 	{
 		console.debug(inputs[i].id)
-		inputs[i].addEventListener("input", ()=>{
+		inputs[i].addEventListener("change", ()=>{
 			vscode.postMessage({
 				command: 'input-value-changed',
 				name: inputs[i].id,
@@ -84,7 +84,7 @@ function updateDataDisplay(data) {
 	for(var prop in data) {
 		let title = document.createElement("p");
 		title.textContent = prop;
-		let value = document.createElement("h1");
+		let value = document.createElement("h3");
 		if(typeof data[prop] == "number") {
 			value.textContent = data[prop].toFixed(3);
 		} else {

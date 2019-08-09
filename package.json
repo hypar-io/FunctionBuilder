@@ -36,6 +36,9 @@
 	"repository": {
 		"url": "https://github.com/hypar-io/FunctionDeveloper"
 	},
+	"extensionDependencies": [
+		"ms-vscode.csharp"
+	],
 	"icon": "hypar-logo.png",
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
