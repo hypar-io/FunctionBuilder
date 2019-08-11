@@ -3,7 +3,6 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as chokidar from 'chokidar';
 
-
 export function activate(context: vscode.ExtensionContext) {
 	console.debug("Activating Hypar Code.");
 
@@ -97,6 +96,7 @@ class HyparPanel {
 
 		let roots = [];
 		roots.push(vscode.Uri.file(path.join(extensionPath, 'media')));
+		roots.push(vscode.Uri.file(path.join(extensionPath, 'dist')));
 		if(vscode.workspace.workspaceFolders) {
 			roots.push(vscode.workspace.workspaceFolders[0].uri);
 		}
@@ -114,21 +114,22 @@ class HyparPanel {
 		);
 		
 		HyparPanel.currentPanel = new HyparPanel(panel, extensionPath, title);
-
-		let modelPath = path.join(extensionPath, 'media', 'model.glb');
-		if(vscode.workspace.workspaceFolders) {
-			modelPath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, "model.glb");
-		}
-
-		let outputPath = path.join(extensionPath, 'media', 'output.json');
-		if(vscode.workspace.workspaceFolders) {
-			outputPath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, "output.json");
-		}
 		
+		let root = path.join(extensionPath, 'media');
+		if(vscode.workspace.workspaceFolders) {
+			root = vscode.workspace.workspaceFolders[0].uri.fsPath;
+		}
+
+		let modelPath = path.join(root, "model.glb");
+		let outputPath = path.join(root, "output.json");
+		let configPath = path.join(root, 'hypar.json');
+		
+		HyparPanel.currentPanel.updateInputs(configPath);
+
 		// This is only to test in debug mode whether the outputs show up.
 		if(!vscode.workspace.workspaceFolders) {
 			HyparPanel.currentPanel._panel.webview.postMessage({
-				command: 'update-data-display', 
+				command: 'update-outputs', 
 				data: {
 					"Volume": 5, 
 					"Another Long-ish String": "This is something that should be caught by ellipsis.",
@@ -139,9 +140,9 @@ class HyparPanel {
 				}
 			});
 		}
-
+		
 		console.debug(`Watching ${modelPath}.`);
-		const watcher = chokidar.watch(modelPath, {
+		const watcher = chokidar.watch([modelPath, configPath], {
 			ignored: /(^|[\/\\])\../,
 			persistent: true
 		});
@@ -150,20 +151,27 @@ class HyparPanel {
 				if(!HyparPanel.currentPanel._panel.visible) {
 					HyparPanel.currentPanel._panel.reveal();
 				}
-				console.debug(`${path} was changed. Reloading...`);
-				HyparPanel.currentPanel._panel.webview.postMessage({command: 'load-model'});
-				
-				if(vscode.workspace.workspaceFolders) {
-					fs.readFile(outputPath, 'utf8', (err:NodeJS.ErrnoException | null, data:string)=>{
-						if(err) {
-							console.warn(err);
-							return;
-						}
-						var outputData = JSON.parse(data);
-						if(HyparPanel.currentPanel) {
-							HyparPanel.currentPanel._panel.webview.postMessage({command: 'update-data-display', data: outputData});
-						}
-					});	
+
+				if(path == modelPath) {
+					console.debug(`${modelPath} was changed. Reloading...`);
+					HyparPanel.currentPanel._panel.webview.postMessage({command: 'load-model'});
+					
+					if(vscode.workspace.workspaceFolders) {
+						fs.readFile(outputPath, 'utf8', (err:NodeJS.ErrnoException | null, data:string)=>{
+							if(err) {
+								console.warn(err);
+								return;
+							}
+							var outputData = JSON.parse(data);
+							if(HyparPanel.currentPanel) {
+								HyparPanel.currentPanel._panel.webview.postMessage({command: 'update-outputs', data: outputData});
+							}
+						});	
+					}
+				} else if(path == configPath) {
+					// Update the inputs
+					console.debug(`${configPath} was changed. Updating the inputs...`);
+					HyparPanel.currentPanel.updateInputs(configPath);
 				}
 			}
 		});
@@ -172,6 +180,15 @@ class HyparPanel {
 	public static revive(panel: vscode.WebviewPanel, extensionPath: string, title: string) {
 		console.debug("Reviving the web view.");
 		HyparPanel.currentPanel = new HyparPanel(panel, extensionPath, title);
+	}
+
+	public updateInputs(configPath: string) {
+		if(fs.existsSync(configPath)) {
+			const hypar = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+			if(HyparPanel.currentPanel) {
+				HyparPanel.currentPanel._panel.webview.postMessage({command: 'update-inputs', data: hypar});
+			}
+		}
 	}
 
 	private constructor(panel: vscode.WebviewPanel, extensionPath: string, title: string ) {
@@ -204,7 +221,6 @@ class HyparPanel {
 						return;
 					case 'input-value-changed':
 						// Write an updated input.json for the reader to watch
-						console.debug(message);
 						this._inputs[message.name] = Number.parseFloat(message.value);
 						console.debug(JSON.stringify(this._inputs));
 						if(vscode.workspace.workspaceFolders) {
@@ -258,21 +274,9 @@ class HyparPanel {
 	}
 
 	private _getHtmlForWebview(title:string) {
-		// Local path to main script run in the webview
-		const threejsPathOnDisk = vscode.Uri.file(
-			path.join(this._extensionPath, 'media', 'three.js')
-		);
-
-		const orbitControlsPath = vscode.Uri.file(
-			path.join(this._extensionPath, 'media', 'OrbitControls.js')
-		);
-
-		const gltfLoaderPath = vscode.Uri.file(
-			path.join(this._extensionPath, 'media', 'GLTFLoader.js')
-		);
 
 		const hyparViewPath = vscode.Uri.file(
-			path.join(this._extensionPath, 'media', 'hypar-view.js')
+			path.join(this._extensionPath, 'dist', 'view.js')
 		);
 
 		const hyparCssPath = vscode.Uri.file(
@@ -290,36 +294,13 @@ class HyparPanel {
 			);
 		}
 		
-		const threejsUri = threejsPathOnDisk.with({ scheme: 'vscode-resource' });
-		const orbitControlsUri = orbitControlsPath.with({scheme: 'vscode-resource'});
-		const hyparViewUri = hyparViewPath.with({scheme: 'vscode-resource'});
-		const gltfLoaderUri = gltfLoaderPath.with({scheme: 'vscode-resource'});
+		const viewUri = hyparViewPath.with({scheme: 'vscode-resource'});
 		const hyparCssUri = hyparCssPath.with({scheme: 'vscode-resource'});
 		const modelUri = modelPath.with({scheme: 'vscode-resource'});
 
 		// Use a nonce to whitelist which scripts can be run
 		const nonce = getNonce();
 		
-		// Read the inputs from the hypar.json
-		let inputPath = path.join(this._extensionPath, 'media', 'hypar.json');
-		if(vscode.workspace.workspaceFolders) {
-			inputPath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'hypar.json');
-		}
-		let inputDivs = "";
-		if(fs.existsSync(inputPath)) {
-			const hypar = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
-			for(let i=0; i<hypar.inputs.length; i++)
-			{
-				let input = hypar.inputs[i];
-				if(input.type == 'range')
-				{
-					let inputDiv = `<p>${input.name}</p><input type="range" id="${input.name}" name="${input.name}" min="${input.min}" max="${input.max}" step="${input.step}"/>`;
-					inputDivs += inputDiv;
-					this._inputs[input.name] = Number.parseFloat(input.min);
-				}
-			}
-		}
-
 		return `<!DOCTYPE html>
 		<html lang="en">
             <head>
@@ -330,25 +311,21 @@ class HyparPanel {
                 -->
                 <meta
 					http-equiv="Content-Security-Policy"
-					content="default-src 'none'; img-src vscode-resource: https:; script-src vscode-resource: 'nonce-${nonce}'; style-src vscode-resource:; connect-src vscode-resource:;"
+					content="default-src 'none'; img-src vscode-resource: https:; script-src vscode-resource: 'nonce-${nonce}' 'unsafe-eval'; style-src vscode-resource:; connect-src vscode-resource:;"
 				/>
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-				<script nonce=${nonce} src="${threejsUri}"></script>
-				<script nonce=${nonce} src="${orbitControlsUri}"></script>
-				<script nonce=${nonce} src="${gltfLoaderUri}"></script>
+				<script type="module" nonce=${nonce} src="${viewUri}"></script>
 				<link rel="stylesheet" type="text/css" href="${hyparCssUri}">
 				<title>"${title}"</title>
             </head>
 			<body>
 				<div id="model"></div>
 				<script type="module" nonce=${nonce}>
-					import {init, loadModel} from "${hyparViewUri}";
 					init("${modelUri}");
 					loadModel();
 				</script>
 				<div class="data">
 					<div id="inputs">
-						${inputDivs}
 					</div>
 					<br>
 					<div id="outputs">
