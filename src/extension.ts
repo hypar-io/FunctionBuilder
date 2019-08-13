@@ -82,7 +82,6 @@ class HyparPanel {
 	private readonly _panel: vscode.WebviewPanel;
 	private _disposables: vscode.Disposable[] = [];
 	private readonly _extensionPath: string;
-	private _inputs: { [name: string]: Number; } = { };
 
 	public static createOrShow(extensionPath: string, title: string) {
 		const column = vscode.ViewColumn.Two;
@@ -148,10 +147,6 @@ class HyparPanel {
 		});
 		watcher.on('change', (path:string, stats: fs.Stats)=>{
 			if(HyparPanel.currentPanel) {
-				if(!HyparPanel.currentPanel._panel.visible) {
-					HyparPanel.currentPanel._panel.reveal();
-				}
-
 				if(path == modelPath) {
 					console.debug(`${modelPath} was changed. Reloading...`);
 					HyparPanel.currentPanel._panel.webview.postMessage({command: 'load-model'});
@@ -212,6 +207,11 @@ class HyparPanel {
 			this._disposables
 		);
 		
+		let inputPath = path.join(this._extensionPath, 'media', 'input.json');
+		if(vscode.workspace.workspaceFolders) {
+			inputPath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'input.json');
+		}
+
 		// Handle messages from the webview
 		this._panel.webview.onDidReceiveMessage(
 			message => {
@@ -220,17 +220,12 @@ class HyparPanel {
 						vscode.window.showErrorMessage(message.text);
 						return;
 					case 'input-value-changed':
-						// Write an updated input.json for the reader to watch
-						this._inputs[message.name] = Number.parseFloat(message.value);
-						console.debug(JSON.stringify(this._inputs));
-						if(vscode.workspace.workspaceFolders) {
-							const inputPath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'input.json');
-							fs.writeFile(inputPath, JSON.stringify(this._inputs), (err)=>{
-								if(err) {
-									console.warn(err);
-								}
-							});
-						}
+						console.debug(message.value);
+						fs.writeFile(inputPath, JSON.stringify(message.value), (err)=>{
+							if(err) {
+								console.warn(err);
+							}
+						});
 						return;
 					case 'image-captured':
 						let matches = message.data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);

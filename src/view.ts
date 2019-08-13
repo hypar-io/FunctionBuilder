@@ -15,6 +15,56 @@ let modelUri: string;
 declare var acquireVsCodeApi: any;
 const vscode = acquireVsCodeApi();
 
+interface Input {
+	name: string;
+	description: string;
+	type: string;
+}
+
+interface RangeInput extends Input {
+	type: "range";
+	min: number;
+	max: number;
+	step: number;
+}
+
+interface NumberInput extends Input {
+	type: "number";
+}
+
+interface BooleanInput extends Input {
+	type: "boolean";
+}
+
+interface ChoiceInput extends Input {
+	type: "choice";
+	choices: string[];
+}
+
+interface DataInput extends Input {
+	type: "data";
+}
+
+interface LocationInput extends Input {
+	type: "location";
+}
+
+interface Output {
+	name: string;
+	description: string;
+	type: any;
+}
+
+interface Hypar {
+	title: string;
+	description: string;
+	name: string;
+	id: string;
+	inputs: (RangeInput | NumberInput | BooleanInput | ChoiceInput | DataInput | LocationInput)[];
+	outputs: Output[];
+	$schema: string;
+}
+
 export function init(uri: string) {
 
 	modelUri = uri;
@@ -106,38 +156,83 @@ export function loadModel() {
 	);
 }
 
-function updateInputs(hypar: any): void {
+function updateInputs(hypar: Hypar): void {
 	console.debug("Updating inputs.");
 	var inputsContainer = <HTMLDivElement>document.getElementById("inputs");
 	inputsContainer.innerHTML = '';
+	
+	let inputs:any = {};
+
 	for(let i=0; i<hypar.inputs.length; i++)
 	{
-		let input = hypar.inputs[i];
-		if(input.type == 'range')
-		{
-			let inputTitleDiv = document.createElement("p");
-			inputTitleDiv.innerHTML = input.name;
-			inputsContainer.appendChild(inputTitleDiv);
+		let inputTitleDiv = document.createElement("p");
+		inputTitleDiv.innerHTML = hypar.inputs[i].name;
+		inputsContainer.appendChild(inputTitleDiv);
 
-			let inputDiv = document.createElement("input");
-			inputDiv.type = "range";
-			inputDiv.id = input.name;
-			inputDiv.min = input.min;
-			inputDiv.max = input.max;
-			inputDiv.step = input.step;
-			inputDiv.value = input.min;
-			inputsContainer.appendChild(inputDiv);
+		let input = null;
+		switch(hypar.inputs[i].type) {
+			case "range":
+				input = <RangeInput>hypar.inputs[i];
+				let inputDiv = document.createElement("input");
+				inputDiv.type = "range";
+				inputDiv.id = input.name;
+				inputDiv.min = input.min.toString();
+				inputDiv.max = input.max.toString();
+				inputDiv.step = input.step.toString();
+				inputDiv.value = input.min.toString();
+				inputsContainer.appendChild(inputDiv);
+				inputs[input.name] = inputDiv.value;
 
-			inputDiv.addEventListener("input", ()=>{
-				vscode.postMessage({
-					command: 'input-value-changed',
-					name: inputDiv.id,
-					value: inputDiv.value
+				inputDiv.addEventListener("input", ()=>{
+					inputs[inputDiv.id] = inputDiv.value;
+					vscode.postMessage({
+						command: 'input-value-changed',
+						value: inputs
+					});
 				});
-			});
+				break;
+			case "choice":
+				input = <ChoiceInput>hypar.inputs[i];
+				let selDiv = document.createElement("select");
+				selDiv.id = input.name;
+				for(let j=0; j<input.choices.length; j++)
+				{
+					let optDiv = document.createElement("option");
+					optDiv.id = input.name + "_" + j;
+					optDiv.value = input.choices[j];
+					optDiv.innerHTML = input.choices[j];
+					selDiv.appendChild(optDiv);
+				}
+				inputsContainer.appendChild(selDiv);
+				inputs[input.name] = selDiv.value;
+
+				selDiv.addEventListener("change", ()=>{
+					inputs[selDiv.id] = selDiv.value;
+					vscode.postMessage({
+						command: 'input-value-changed',
+						value: inputs
+					});
+				});
+				break;
+			case "boolean":
+				input = <BooleanInput>hypar.inputs[i];
+				let boolDiv = document.createElement("input");
+				boolDiv.type = "checkbox";
+				boolDiv.checked = false;
+				boolDiv.id = input.name;
+				inputsContainer.appendChild(boolDiv);
+				inputs[input.name] = boolDiv.checked;
+
+				boolDiv.addEventListener("change", ()=>{
+					inputs[boolDiv.id] = boolDiv.checked;
+					vscode.postMessage({
+						command: 'input-value-changed',
+						value: inputs
+					});
+				});
+				break;
 		}
 	}
-	
 }
 
 function updateOutputs(outputs: any) {
