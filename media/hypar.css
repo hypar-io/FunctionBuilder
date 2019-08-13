@@ -59,12 +59,14 @@ canvas {
 	position: relative;
 	display: flex;
 	flex-direction: column;
+	flex-shrink: 0;
 }
 
 #outputs {
 	position: relative;
 	display: flex;
 	flex-direction: column;
+	flex-shrink: 0;
 }
 
 h1 {
