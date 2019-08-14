@@ -122,8 +122,9 @@ class HyparPanel {
 		let modelPath = path.join(root, "model.glb");
 		let outputPath = path.join(root, "output.json");
 		let configPath = path.join(root, 'hypar.json');
-		
-		HyparPanel.currentPanel.updateInputs(configPath);
+		let inputPath = path.join(root, 'input.json');
+
+		HyparPanel.currentPanel.updateInputs(configPath, inputPath);
 
 		// This is only to test in debug mode whether the outputs show up.
 		if(!vscode.workspace.workspaceFolders) {
@@ -166,7 +167,7 @@ class HyparPanel {
 				} else if(path == configPath) {
 					// Update the inputs
 					console.debug(`${configPath} was changed. Updating the inputs...`);
-					HyparPanel.currentPanel.updateInputs(configPath);
+					HyparPanel.currentPanel.updateInputs(configPath, inputPath);
 				}
 			}
 		});
@@ -177,11 +178,15 @@ class HyparPanel {
 		HyparPanel.currentPanel = new HyparPanel(panel, extensionPath, title);
 	}
 
-	public updateInputs(configPath: string) {
+	public updateInputs(configPath: string, inputPath: string) {
 		if(fs.existsSync(configPath)) {
 			const hypar = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+			let input = null;
+			if(fs.existsSync(inputPath)) {
+				input = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
+			}
 			if(HyparPanel.currentPanel) {
-				HyparPanel.currentPanel._panel.webview.postMessage({command: 'update-inputs', data: hypar});
+				HyparPanel.currentPanel._panel.webview.postMessage({command: 'update-inputs', config: hypar, input: input});
 			}
 		}
 	}

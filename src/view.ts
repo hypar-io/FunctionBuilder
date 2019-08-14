@@ -76,7 +76,7 @@ export function init(uri: string) {
 				loadModel();
 				break;
 			case 'update-inputs':
-				updateInputs(message.data);
+				updateInputs(message.config, message.input);
 				break;
 			case 'update-outputs':
 				updateOutputs(message.data);
@@ -156,7 +156,7 @@ export function loadModel() {
 	);
 }
 
-function updateInputs(hypar: Hypar): void {
+function updateInputs(hypar: Hypar, state: any): void {
 	console.debug("Updating inputs.");
 	var inputsContainer = <HTMLDivElement>document.getElementById("inputs");
 	inputsContainer.innerHTML = '';
@@ -179,7 +179,7 @@ function updateInputs(hypar: Hypar): void {
 				inputDiv.min = input.min.toString();
 				inputDiv.max = input.max.toString();
 				inputDiv.step = input.step.toString();
-				inputDiv.value = input.min.toString();
+				inputDiv.value = state[input.name] ? state[input.name] : input.min.toString();
 				inputsContainer.appendChild(inputDiv);
 				inputs[input.name] = inputDiv.value;
 
@@ -204,6 +204,7 @@ function updateInputs(hypar: Hypar): void {
 					selDiv.appendChild(optDiv);
 				}
 				inputsContainer.appendChild(selDiv);
+				selDiv.value = state[input.name] ? state[input.name] : input.choices[0];
 				inputs[input.name] = selDiv.value;
 
 				selDiv.addEventListener("change", ()=>{
@@ -218,7 +219,7 @@ function updateInputs(hypar: Hypar): void {
 				input = <BooleanInput>hypar.inputs[i];
 				let boolDiv = document.createElement("input");
 				boolDiv.type = "checkbox";
-				boolDiv.checked = false;
+				boolDiv.checked = state[input.name] ? state[input.name] : false;
 				boolDiv.id = input.name;
 				inputsContainer.appendChild(boolDiv);
 				inputs[input.name] = boolDiv.checked;
