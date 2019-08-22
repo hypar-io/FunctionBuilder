@@ -1,6 +1,6 @@
 {
-	"name": "hypar-function-developer",
-	"displayName": "Hypar Function Developer",
+	"name": "hypar-function-builder",
+	"displayName": "Hypar Function Builder",
 	"version": "0.1.0",
 	"description": "A live building and visualization environment for building Hypar functions.",
 	"engines": {
@@ -34,7 +34,7 @@
 		"color": "#f15c6c"
 	},
 	"repository": {
-		"url": "https://github.com/hypar-io/FunctionDeveloper"
+		"url": "https://github.com/hypar-io/FunctionBuilder"
 	},
 	"extensionDependencies": [
 		"ms-vscode.csharp"

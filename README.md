@@ -1,5 +1,5 @@
 ## How It Works
-Hypar Function Developer works with several commands in the Hypar CLI to provide a live building and visualization environment for use when building your Hypar functions.
+Hypar Function Builder works with several commands in the Hypar CLI to provide a live building and visualization environment for use when building your Hypar functions.
 
 ## Prerequisites
 - The Hypar CLI contains commands for generating, running, and publishing your Hypar function.
