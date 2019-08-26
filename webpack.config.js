@@ -5,36 +5,6 @@
 const path = require('path');
 
 /**@type {import('webpack').Configuration}*/
-const viewConfig = {
-  target: 'web',
-  entry: './src/view.ts', 
-  output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: 'view.js',
-    libraryTarget: 'umd',
-    devtoolModuleFilenameTemplate: '../[resource-path]'
-  },
-  devtool: 'source-map',
-  externals: {
-    vscode: 'commonjs vscode'
-  },
-  resolve: {
-    extensions: ['.ts', '.js']
-  },
-  module: {
-    rules: [
-      {
-        test: /\.ts$/,
-        exclude: /node_modules/,
-        use: [
-          {
-            loader: 'ts-loader'
-          }
-        ]
-      }
-    ]
-  }
-};
 
 const extensionConfig = {
   target: 'node',
@@ -70,4 +40,4 @@ const extensionConfig = {
     ]
   }
 };
-module.exports = [viewConfig, extensionConfig];
+module.exports = [extensionConfig];
