@@ -6,6 +6,15 @@ import * as chokidar from 'chokidar';
 export function activate(context: vscode.ExtensionContext) {
 	console.debug("Activating Hypar Code.");
 
+	let root = path.join(context.extensionPath, 'media');
+	if(vscode.workspace.workspaceFolders) {
+		root = vscode.workspace.workspaceFolders[0].uri.fsPath;
+	}
+	let modelPath = path.join(root, "model.glb");
+	let outputPath = path.join(root, "output.json");
+	let configPath = path.join(root, 'hypar.json');
+	let inputPath = path.join(root, 'input.json');
+
 	let title = "Hypar Preview";
 	if(vscode.workspace.name) {
 		title = vscode.workspace.name;
@@ -13,7 +22,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('hypar.preview', ()=>{
-			HyparPanel.createOrShow(context, title);
+			HyparPanel.createOrShow(context, title, modelPath, configPath, inputPath, outputPath);
 		})
 	);
 
@@ -21,7 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.registerWebviewPanelSerializer(HyparPanel.viewType, {
 			async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any) {
 				console.log(`Got state: ${state}`);
-				HyparPanel.revive(webviewPanel, context.extensionPath, title);
+				HyparPanel.revive(webviewPanel, context.extensionPath, title, modelPath, configPath);
 			}
 		});
 	}
@@ -49,30 +58,12 @@ export function activate(context: vscode.ExtensionContext) {
 				new vscode.ShellExecution('hypar run'), []
 			);
 	
-			let initTask = new vscode.Task(
-				{type: type, task: 'init'},
-				vscode.TaskScope.Workspace,
-				'Init',
-				'Hypar',
-				new vscode.ShellExecution('hypar init'), []
-			);
-	
-			let publishTask = new vscode.Task(
-				{type: type, task: 'publish'},
-				vscode.TaskScope.Workspace,
-				'Publish',
-				'Hypar',
-				new vscode.ShellExecution('hypar publish'), []
-			);
-	
-			return [runTask, initTask, publishTask];
+			return [runTask];
 		},
 		resolveTask(_task: vscode.Task): vscode.Task | undefined {
 			return undefined;
 		}
 	});
-
-	
 }
 
 class HyparPanel {
@@ -85,7 +76,7 @@ class HyparPanel {
 	private _disposables: vscode.Disposable[] = [];
 	private readonly _extensionPath: string;
 
-	public static createOrShow(context:vscode.ExtensionContext, title: string) {
+	public static createOrShow(context:vscode.ExtensionContext, title: string, modelPath: string, configPath: string, inputPath: string, outputPath: string) {
 		const column = vscode.ViewColumn.Two;
 
 		// If we already have a panel, show it.
@@ -114,74 +105,39 @@ class HyparPanel {
 			}
 		);
 		
-		HyparPanel.currentPanel = new HyparPanel(panel, context.extensionPath, title);
-		
-		let root = path.join(context.extensionPath, 'media');
-		if(vscode.workspace.workspaceFolders) {
-			root = vscode.workspace.workspaceFolders[0].uri.fsPath;
-		}
+		HyparPanel.currentPanel = new HyparPanel(panel, context.extensionPath, title, modelPath, configPath);
 
-		let modelPath = path.join(root, "model.glb");
-		let outputPath = path.join(root, "output.json");
-		let configPath = path.join(root, 'hypar.json');
-		let inputPath = path.join(root, 'input.json');
-
-		this.updateInputs(configPath, inputPath);
-
-		// This is only to test in debug mode whether the outputs show up.
-		if(!vscode.workspace.workspaceFolders) {
-			HyparPanel.currentPanel._panel.webview.postMessage({
-				command: 'update-outputs', 
-				data: {
-					"Volume": 5, 
-					"Another Long-ish String": "This is something that should be caught by ellipsis.",
-					"Foo": 27.0,
-					"Bar": 42.0,
-					"Baz": 55.0,
-					"Barf": 22.0
-				}
-			});
-		}
-		
 		console.debug(`Watching ${modelPath}.`);
-		const watcher = chokidar.watch([modelPath, configPath], {
+		const watcher = chokidar.watch([modelPath, configPath, outputPath], {
 			ignored: /(^|[\/\\])\../,
 			persistent: true
 		});
 		watcher.on('change', (path:string, stats: fs.Stats)=>{
 			if(HyparPanel.currentPanel) {
-				if(path == modelPath) {
-					this.updateModel(modelPath);
-				} else if(path == configPath) {
-					this.updateInputs(configPath, inputPath);
-					this.updateModel(modelPath);
-				} else if(path == outputPath) {
-					this.updateOutputs(outputPath);
+				switch(path) {
+					case modelPath:
+						this.updateModel(modelPath);
+						break;
+					case configPath:
+						this.updateInputs(configPath, inputPath);
+						break;
+					case outputPath:
+						this.updateOutputs(outputPath);
+						break;
+					default:
+						console.warn('Unknown path received.');
 				}
 			}
 		});
-
-		// Handle messages from the webview
-		panel.webview.onDidReceiveMessage( message => {
-			switch (message.command) {
-				case 'hypar-update-inputs':
-					// vscode.window.showErrorMessage(message.text);
-					console.debug('Received request to update inputs.');
-					return;
-				}
-			},
-			undefined,
-			context.subscriptions
-		);
 	}
 
-	public static updateModel(modelPath: string) {
+	public static updateModel(modelPath: string, zoomToFit: boolean = false) {
 		console.debug(`${modelPath} was changed. Reloading...`);
 		let b = fs.readFileSync(modelPath, 'base64');
 		// TODO: Use ArrayBuffer when supported by VS Code
 		// var ab = b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
 		if(HyparPanel.currentPanel) {
-			HyparPanel.currentPanel._panel.webview.postMessage({command: 'load-model', data: b});
+			HyparPanel.currentPanel._panel.webview.postMessage({command: 'load-model', data: b, options: {zoomToFit: zoomToFit}});
 		}
 	}
 
@@ -215,17 +171,16 @@ class HyparPanel {
 		}
 	}
 
-	public static revive(panel: vscode.WebviewPanel, extensionPath: string, title: string) {
+	public static revive(panel: vscode.WebviewPanel, extensionPath: string, title: string, modelPath: string, configPath: string) {
 		console.debug("Reviving the web view.");
-		HyparPanel.currentPanel = new HyparPanel(panel, extensionPath, title);
+		HyparPanel.currentPanel = new HyparPanel(panel, extensionPath, title, modelPath, configPath);
 	}
 
-	private constructor(panel: vscode.WebviewPanel, extensionPath: string, title: string ) {
+	private constructor(panel: vscode.WebviewPanel, extensionPath: string, title: string, modelPath: string, configPath: string ) {
 		this._panel = panel;
 		this._extensionPath = extensionPath;
 
 		// Set the webview's initial html content
-		console.debug("Updating on construction.");
 		this._update(title);
 
 		// Listen for when the panel is disposed
@@ -253,15 +208,18 @@ class HyparPanel {
 					case 'alert':
 						vscode.window.showErrorMessage(message.text);
 						return;
-					case 'input-value-changed':
-						console.debug(message.value);
-						fs.writeFile(inputPath, JSON.stringify(message.value), (err)=>{
+					case 'hypar-update-inputs':
+						fs.writeFile(inputPath, JSON.stringify(message.data), (err)=>{
 							if(err) {
 								console.warn(err);
 							}
 						});
 						return;
-					case 'image-captured':
+					case 'hypar-loaded':
+						HyparPanel.updateInputs(configPath, inputPath);
+						HyparPanel.updateModel(modelPath, true);
+						return;
+					case 'hypar-image-captured':
 						let matches = message.data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
 						if (matches.length !== 3) {
 							return new Error('Invalid input string');
@@ -308,23 +266,13 @@ class HyparPanel {
 			path.join(this._extensionPath, 'media', 'hypar.css')
 		);
 		
-		console.debug("Setting model path to the media directory.");
-		let modelPath = vscode.Uri.file(
-			path.join(this._extensionPath, 'media', 'model.glb')
-		);
-		if(vscode.workspace.workspaceFolders) {
-			console.debug("Loading model.glb from workspace root.");
-			modelPath = vscode.Uri.file(
-				path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'model.glb')
-			);
-		}
-
 		const hyparCssUri = hyparCssPath.with({scheme: 'vscode-resource'});
-		const modelUri = modelPath.with({scheme: 'vscode-resource'});
 
 		// Use a nonce to whitelist which scripts can be run
 		const nonce = getNonce();
 		
+		const root = 'http://localhost:8080';
+
 		return `<!DOCTYPE html>
 		<html lang="en">
             <head>
@@ -335,26 +283,26 @@ class HyparPanel {
                 -->
                 <meta
 					http-equiv="Content-Security-Policy"
-					content="frame-src http://localhost:8080/functions/dev; img-src vscode-resource: https:; script-src vscode-resource: 'nonce-${nonce}' 'unsafe-eval'; style-src vscode-resource: 'unsafe-inline'; connect-src vscode-resource:;"
+					content="frame-src http://localhost:8080; img-src vscode-resource: https:; script-src vscode-resource: 'nonce-${nonce}' 'unsafe-eval'; style-src vscode-resource: 'unsafe-inline'; connect-src vscode-resource:;"
 				/>
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 				<link rel="stylesheet" type="text/css" href="${hyparCssUri}">
 				<title>"${title}"</title>
             </head>
 			<body>
-				<iframe id="hypar-frame" style="width:100%;height:100%" src="http://localhost:8080/functions/dev" frameborder="0" ></iframe>
+				<iframe id="hypar-frame" style="width:100%;height:100%" src="http://localhost:8080/functions/build" frameborder="0" ></iframe>
 				<script nonce="${nonce}">
-
 					let vscode = acquireVsCodeApi();
-					let hypar = document.getElementById('hypar-frame').contentWindow
+					let hypar = document.getElementById('hypar-frame').contentWindow;
 					window.addEventListener('message', event => {
-						console.debug(JSON.stringify(event.data));
 						let message = event.data
 						if (message.command == 'update-inputs' ||
 							message.command == 'update-outputs' ||
 							message.command == 'load-model') {
 								hypar.postMessage(message, 'http://localhost:8080/functions/build')
-						} else if (message.command == 'hypar-update-inputs') {
+						} else if (	message.command == 'hypar-update-inputs' ||
+									message.command == 'hypar-loaded' ||
+									message.command == 'hypar-image-captured') {
 							vscode.postMessage(message)
 						}
 					});
