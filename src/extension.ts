@@ -133,7 +133,13 @@ class HyparPanel {
 
 	public static updateModel(modelPath: string, zoomToFit: boolean = false) {
 		console.debug(`${modelPath} was changed. Reloading...`);
+		if (!fs.existsSync(modelPath)) {
+			console.log(`The file, ${modelPath} does not exist. The model update message will not be sent.`);
+			return;
+		}
+
 		let b = fs.readFileSync(modelPath, 'base64');
+		
 		// TODO: Use ArrayBuffer when supported by VS Code
 		// var ab = b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
 		if(HyparPanel.currentPanel) {
@@ -271,7 +277,8 @@ class HyparPanel {
 		// Use a nonce to whitelist which scripts can be run
 		const nonce = getNonce();
 		
-		const root = 'http://localhost:8080';
+		const root = 'https://dev.hypar.io';
+		// const root = 'http://localhost:8080';
 
 		return `<!DOCTYPE html>
 		<html lang="en">
@@ -283,14 +290,14 @@ class HyparPanel {
                 -->
                 <meta
 					http-equiv="Content-Security-Policy"
-					content="frame-src http://localhost:8080; img-src vscode-resource: https:; script-src vscode-resource: 'nonce-${nonce}' 'unsafe-eval'; style-src vscode-resource: 'unsafe-inline'; connect-src vscode-resource:;"
+					content="frame-src ${root}; img-src vscode-resource: https:; script-src vscode-resource: 'nonce-${nonce}' 'unsafe-eval'; style-src vscode-resource: 'unsafe-inline'; connect-src vscode-resource:;"
 				/>
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 				<link rel="stylesheet" type="text/css" href="${hyparCssUri}">
 				<title>"${title}"</title>
             </head>
 			<body>
-				<iframe id="hypar-frame" style="width:100%;height:100%" src="http://localhost:8080/functions/build" frameborder="0" ></iframe>
+				<iframe id="hypar-frame" style="width:100%;height:100%" src="${root}/functions/build" frameborder="0" ></iframe>
 				<script nonce="${nonce}">
 					let vscode = acquireVsCodeApi();
 					let hypar = document.getElementById('hypar-frame').contentWindow;
@@ -299,7 +306,7 @@ class HyparPanel {
 						if (message.command == 'update-inputs' ||
 							message.command == 'update-outputs' ||
 							message.command == 'load-model') {
-								hypar.postMessage(message, 'http://localhost:8080/functions/build')
+								hypar.postMessage(message, '${root}/functions/build')
 						} else if (	message.command == 'hypar-update-inputs' ||
 									message.command == 'hypar-loaded' ||
 									message.command == 'hypar-image-captured') {
