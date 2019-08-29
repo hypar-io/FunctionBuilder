@@ -1,0 +1,56 @@
+{
+  "$schema": "https://hypar.io/schemas/function.json",
+  "description": "The HyparDemo function.",
+  "id": "337f021f-6161-4970-aea6-3259bf1384ba",
+  "name": "HyparDemo",
+  "repository_url": "https://github.com/hypar-io/function",
+  "inputs": [
+    {
+      "min": 1.0,
+      "max": 100.0,
+      "step": 1.0,
+      "name": "Length",
+      "description": "The length.",
+      "type": "range"
+    },
+    {
+      "min": 1.0,
+      "max": 100.0,
+      "step": 1.0,
+      "name": "Width",
+      "description": "The width.",
+      "type": "range"
+    },
+    {
+      "min": 1.0,
+      "max": 100.0,
+      "step": 1.0,
+      "name": "Width1",
+      "description": "The width.",
+      "type": "range"
+    },
+    {
+      "choices": ["Cersei","Hodor","Tywin"],
+      "name": "The Choice",
+      "description": "A choice.",
+      "type": "choice"
+    },
+    {
+      "name": "Yes or No",
+      "description": "Yes or no.",
+      "type": "boolean"
+    },
+    {
+      "name": "Location",
+      "description": "The location of the project",
+      "type": "location"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "Volume",
+      "description": "The volume.",
+      "type": "number"
+    }
+  ]
+}

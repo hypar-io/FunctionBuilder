@@ -1,7 +1,4 @@
 node_modules
 dist
 *.vsix
-model.glb
-hypar.json
-input.json
 .DS_Store
