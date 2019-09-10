@@ -21,3 +21,6 @@ Hypar Function Builder is a [Webview](https://code.visualstudio.com/api/extensio
   - Updating the `hypar.json` will also cause the `README.md` file to be updated.
 - Click the camera icon to grab a preview.
   - The preview image will be written to `preview.png` at the root of your workspace. The `README.md` file references this image. Capturing a new screen shot will also show the updated `preview.png` image in the `README.md`.
+
+## Troubleshooting
+- **ChromeOS:** if you see a blank screen after logging into Hypar, your GPU support may be disabled (although this could be indicative of other problems, instead). Go to [chrome://flags/#crostini-gpu-support](chrome://flags/#crostini-gpu-support) in a regular web browser, set the flag to 'Enabled', and restart. This flag is not supported on every Chromebook, but it will be enabled by default in later versions.
