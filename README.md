@@ -1,9 +1,9 @@
-Hypar Function Builder is a [Webview](https://code.visualstudio.com/api/extension-guides/webview) extension for VS Code, which works with the Hypar CLI to provide a live building and visualization environment for building your Hypar functions.
+Hypar Function Builder is a [Webview](https://code.visualstudio.com/api/extension-guides/webview) extension for VS Code, which works with the Hypar CLI to provide a live building and visualization environment for building your [Hypar](https://hypar.io/) functions.
 
 ## Prerequisites
 - The Hypar CLI contains commands for generating, running, and publishing your Hypar function.
   - `dotnet tool install -g hypar.cli`
-- The [C# for Visual Studio Code Extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.csharp).
+- The [C# for Visual Studio Code Extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.csharp). This is listed as a dependency of this extension and should be installed automatically when this extension is installed.
 - A Hypar function. Hypar functions can be created from the command line using `hypar new`. This extension works on any Hypar function directory that contains a `hypar.json` file.
 
 ## To Use
@@ -19,5 +19,5 @@ Hypar Function Builder is a [Webview](https://code.visualstudio.com/api/extensio
 - Update your `hypar.json`
   - Changing the inputs, outputs, or description of your `hypar.json` will cause the Function Builder's UI to update to show the new inputs and outputs. Actions like renaming inputs, or changing input types, will cause the build to fail, so although the UI may update, the model may not. Visit the VS Code terminal to see error messages for aid in debugging.
   - Updating the `hypar.json` will also cause the `README.md` file to be updated.
-- Click the camera in the upper right corer to grab a preview.
+- Click the camera icon to grab a preview.
   - The preview image will be written to `preview.png` at the root of your workspace. The `README.md` file references this image. Capturing a new screen shot will also show the updated `preview.png` image in the `README.md`.
