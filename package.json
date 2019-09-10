@@ -2,7 +2,7 @@
 	"name": "hypar-function-builder",
 	"displayName": "Hypar Function Builder",
 	"version": "0.1.0",
-	"description": "A live building and visualization environment for building Hypar functions.",
+	"description": "A live development and visualization environment for building Hypar functions.",
 	"engines": {
 		"vscode": "^1.32.0"
 	},
