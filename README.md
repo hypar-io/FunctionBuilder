@@ -7,8 +7,8 @@ Hypar Function Builder is a [Webview](https://code.visualstudio.com/api/extensio
 - A Hypar function. Hypar functions can be created from the command line using `hypar new`. This extension works on any Hypar function directory that contains a `hypar.json` file.
 
 ## To Use
-- Create a Hypar function from the command line using `hypar new`.
-- File > Open > Hypar function directory.
+- Create a Hypar function from the command line using `hypar new`. This will create a directory with the same name as the function.
+- File > Open... > Select the directory you created in the first step, or an existing Hypar function directory (a directory with a `hypar.json` file).
 - Run the `Hypar: Run` task. 
   - This will start the Hypar runner which watches for changes in the `.cs` files and `hypar.json` file. When changes occur, the runner automatically generates new code, builds the function, and executes the function with the inputs it finds in the `input.json` file. If no `input.json` file exists when the Hypar runner executes, a new `input.json` file will be generated with default values.
 - Run the `Hypar: Preview` command. 
