@@ -2,7 +2,7 @@ Hypar Function Builder is a [Webview](https://code.visualstudio.com/api/extensio
 
 ## Prerequisites
 - The Hypar CLI contains commands for generating, running, and publishing your Hypar function.
-  - `dotnet tool install -g hypar.cli`
+  - From your terminal (Mac and Linux) or command line (Windows): `dotnet tool install -g hypar.cli`
 - The [C# for Visual Studio Code Extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.csharp). This is listed as a dependency of this extension and should be installed automatically when this extension is installed.
 - A Hypar function. Hypar functions can be created from the command line using `hypar new`. This extension works on any Hypar function directory that contains a `hypar.json` file.
 
