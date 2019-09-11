@@ -138,7 +138,18 @@ class HyparPanel {
 			return;
 		}
 
-		let b = fs.readFileSync(modelPath, 'base64');
+		let b = null;
+		try {
+			b = fs.readFileSync(modelPath, 'base64');
+		} catch (error) {
+			setTimeout(()=>{
+				// Wait before attempting to read the file again, to avoid
+				// file locking issues discovered during development.
+				// TODO: Figure out what's causing file locking issues.
+				console.warn(`There was an error reading the model: ${error}. Retrying in 1 second.`);
+				b = fs.readFileSync(modelPath, 'base64');
+			}, 1000);
+		}
 		
 		// TODO: Use ArrayBuffer when supported by VS Code
 		// var ab = b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
@@ -151,10 +162,32 @@ class HyparPanel {
 		// Update the inputs
 		console.debug(`${configPath} was changed. Updating the inputs...`);
 		if(fs.existsSync(configPath)) {
-			const hypar = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+			let hypar = null;
+			try {
+				// Wait before attempting to read the file again, to avoid
+				// file locking issues discovered during development.
+				// TODO: Figure out what's causing file locking issues.
+				hypar = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+			} catch (error) {
+				console.warn(`There was an error reading the config: ${error}. Retrying in 1 second.`);
+				setTimeout(()=>{
+					JSON.parse(fs.readFileSync(configPath, 'utf8'));
+				}, 1000);
+			}
+			
 			let input = null;
 			if(fs.existsSync(inputPath)) {
-				input = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
+				try {
+					input = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
+				} catch (error) {
+					// Wait before attempting to read the file again, to avoid
+					// file locking issues discovered during development.
+					// TODO: Figure out what's causing file locking issues.
+					console.warn(`There was an error reading the inputs: ${error}. Retrying in 1 second.`);
+					setTimeout(()=>{
+						input = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
+					}, 1000);
+				}
 			}
 			if(HyparPanel.currentPanel) {
 				HyparPanel.currentPanel._panel.webview.postMessage({command: 'update-inputs', config: hypar, input: input});
