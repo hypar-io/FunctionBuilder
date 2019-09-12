@@ -138,28 +138,26 @@ class HyparPanel {
 			return;
 		}
 
-		let b = null;
 		try {
-			b = fs.readFileSync(modelPath, 'base64');
+			let b = fs.readFileSync(modelPath, 'base64');
+			// TODO: Use ArrayBuffer when supported by VS Code
+			// var ab = b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
+			if(HyparPanel.currentPanel) {
+				HyparPanel.currentPanel._panel.webview.postMessage({command: 'load-model', data: b, options: {zoomToFit: zoomToFit}});
+			}
 		} catch (error) {
 			HyparPanel.sleep(()=>{
 				// Wait before attempting to read the file again, to avoid
 				// file locking issues discovered during development.
 				// TODO: Figure out what's causing file locking issues.
 				console.warn(`There was an error reading the model: ${error}. Retrying in 1 second.`);
-				b = fs.readFileSync(modelPath, 'base64');
+				let b = fs.readFileSync(modelPath, 'base64');
+				// TODO: Use ArrayBuffer when supported by VS Code
+				// var ab = b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
+				if(HyparPanel.currentPanel) {
+					HyparPanel.currentPanel._panel.webview.postMessage({command: 'load-model', data: b, options: {zoomToFit: zoomToFit}});
+				}
 			});
-		}
-		
-		if (!b) {
-			console.warn('The model file could not be read after 1 retry.');
-			return;
-		}
-
-		// TODO: Use ArrayBuffer when supported by VS Code
-		// var ab = b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
-		if(HyparPanel.currentPanel) {
-			HyparPanel.currentPanel._panel.webview.postMessage({command: 'load-model', data: b, options: {zoomToFit: zoomToFit}});
 		}
 	}
 
@@ -167,45 +165,40 @@ class HyparPanel {
 		// Update the inputs
 		console.debug(`${configPath} was changed. Updating the inputs...`);
 		if(fs.existsSync(configPath)) {
-			let hypar = null;
 			try {
 				// Wait before attempting to read the file again, to avoid
 				// file locking issues discovered during development.
 				// TODO: Figure out what's causing file locking issues.
-				hypar = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+				let hypar = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+				HyparPanel.readInputFileAndPostMessage(inputPath, hypar);
 			} catch (error) {
 				console.warn(`There was an error reading the config: ${error}. Retrying in 1 second.`);
 				HyparPanel.sleep(()=>{
-					JSON.parse(fs.readFileSync(configPath, 'utf8'));
+					let hypar = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+					HyparPanel.readInputFileAndPostMessage(inputPath, hypar);
 				});
 			}
+		}
+	}
 
-			if (!hypar) {
-				console.warn('The config file could not be read after 1 retry.');
-				return;
-			}
-			
-			let input = null;
-			if(fs.existsSync(inputPath)) {
-				try {
-					input = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
-				} catch (error) {
-					// Wait before attempting to read the file again, to avoid
-					// file locking issues discovered during development.
-					// TODO: Figure out what's causing file locking issues.
-					console.warn(`There was an error reading the inputs: ${error}. Retrying in 1 second.`);
-					HyparPanel.sleep(()=>{
-						input = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
-					});
+	private static readInputFileAndPostMessage(inputPath: string, hypar: any) {
+		if(fs.existsSync(inputPath)) {
+			try {
+				let input = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
+				if(HyparPanel.currentPanel) {
+					HyparPanel.currentPanel._panel.webview.postMessage({command: 'update-inputs', config: hypar, input: input});
 				}
-			}
-			if(!input) {
-				console.warn('The input file could not be read after 1 retry.');
-				return;
-			}
-
-			if(HyparPanel.currentPanel) {
-				HyparPanel.currentPanel._panel.webview.postMessage({command: 'update-inputs', config: hypar, input: input});
+			} catch (error) {
+				// Wait before attempting to read the file again, to avoid
+				// file locking issues discovered during development.
+				// TODO: Figure out what's causing file locking issues.
+				console.warn(`There was an error reading the inputs: ${error}. Retrying in 1 second.`);
+				HyparPanel.sleep(()=>{
+					let input = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
+					if(HyparPanel.currentPanel) {
+						HyparPanel.currentPanel._panel.webview.postMessage({command: 'update-inputs', config: hypar, input: input});
+					}
+				});
 			}
 		}
 	}
