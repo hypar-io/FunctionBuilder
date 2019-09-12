@@ -142,15 +142,20 @@ class HyparPanel {
 		try {
 			b = fs.readFileSync(modelPath, 'base64');
 		} catch (error) {
-			setTimeout(()=>{
+			HyparPanel.sleep(()=>{
 				// Wait before attempting to read the file again, to avoid
 				// file locking issues discovered during development.
 				// TODO: Figure out what's causing file locking issues.
 				console.warn(`There was an error reading the model: ${error}. Retrying in 1 second.`);
 				b = fs.readFileSync(modelPath, 'base64');
-			}, 1000);
+			});
 		}
 		
+		if (!b) {
+			console.warn('The model file could not be read after 1 retry.');
+			return;
+		}
+
 		// TODO: Use ArrayBuffer when supported by VS Code
 		// var ab = b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
 		if(HyparPanel.currentPanel) {
@@ -170,9 +175,14 @@ class HyparPanel {
 				hypar = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 			} catch (error) {
 				console.warn(`There was an error reading the config: ${error}. Retrying in 1 second.`);
-				setTimeout(()=>{
+				HyparPanel.sleep(()=>{
 					JSON.parse(fs.readFileSync(configPath, 'utf8'));
-				}, 1000);
+				});
+			}
+
+			if (!hypar) {
+				console.warn('The config file could not be read after 1 retry.');
+				return;
 			}
 			
 			let input = null;
@@ -184,15 +194,29 @@ class HyparPanel {
 					// file locking issues discovered during development.
 					// TODO: Figure out what's causing file locking issues.
 					console.warn(`There was an error reading the inputs: ${error}. Retrying in 1 second.`);
-					setTimeout(()=>{
+					HyparPanel.sleep(()=>{
 						input = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
-					}, 1000);
+					});
 				}
 			}
+			if(!input) {
+				console.warn('The input file could not be read after 1 retry.');
+				return;
+			}
+
 			if(HyparPanel.currentPanel) {
 				HyparPanel.currentPanel._panel.webview.postMessage({command: 'update-inputs', config: hypar, input: input});
 			}
 		}
+	}
+
+	private static timeout(ms: number) {
+		return new Promise(resolve => setTimeout(resolve, ms));
+	}
+
+	private static async sleep(fn: any, ...args: any) {
+		await HyparPanel.timeout(1000);
+		return fn(...args);
 	}
 
 	public static updateOutputs(outputPath: string) {
