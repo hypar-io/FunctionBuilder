@@ -327,7 +327,8 @@ class HyparPanel {
 		// Use a nonce to whitelist which scripts can be run
 		const nonce = getNonce();
 		
-		const root = 'https://dev.hypar.io';
+		const root = 'https://hypar.io';
+		// const root = 'https://dev.hypar.io';
 		// const root = 'http://localhost:8080';
 
 		return `<!DOCTYPE html>
