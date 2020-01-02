@@ -1,7 +1,7 @@
 {
 	"name": "hypar-function-builder",
 	"displayName": "Hypar Function Builder",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "A live development and visualization environment for building Hypar functions.",
 	"engines": {
 		"vscode": "^1.32.0"
@@ -24,6 +24,17 @@
 				"category": "Hypar"
 			}
 		],
+		"configuration": {
+			"title": "Hypar Function Builder",
+			"properties": {
+				"hyparFunctionBuilder.hyparServer": {
+					"type": "string",
+					"default": "https://hypar.io",
+					"description": "The root URL of Hypar's servers.",
+					"format": "uri"
+				}
+			}
+		},
 		"taskDefinitions": [
 			{
 				"type": "Hypar"
