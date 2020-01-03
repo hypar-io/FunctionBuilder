@@ -327,9 +327,13 @@ class HyparPanel {
 		// Use a nonce to whitelist which scripts can be run
 		const nonce = getNonce();
 		
-		const root = 'https://hypar.io';
-		// const root = 'https://dev.hypar.io';
-		// const root = 'http://localhost:8080';
+		let root = vscode.workspace.getConfiguration('hyparFunctionBuilder').hyparServer;
+		if (!root || root.length == 0) {
+			root = 'https://hypar.io'
+		}
+
+		// Remove outer whitespace and remove any trailing slashes.
+		root = root.trim().replace(/\/+$/, '')
 
 		return `<!DOCTYPE html>
 		<html lang="en">
