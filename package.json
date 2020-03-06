@@ -48,7 +48,7 @@
 		"url": "https://github.com/hypar-io/FunctionBuilder"
 	},
 	"extensionDependencies": [
-		"ms-vscode.csharp"
+		"ms-dotnettools.csharp"
 	],
 	"icon": "hypar-logo.png",
 	"scripts": {
